@@ -33,5 +33,9 @@ return [
 
 		// assets
 		['name' => 'assets#soundsTest', 'url' => '/assets/sounds/test.wav', 'verb' => 'GET'],
+
+		// Settings API
+		['name' => 'admin#getSetting', 'url' => '/api/settings/{key}', 'verb' => 'GET'],
+		['name' => 'admin#setSetting', 'url' => '/api/settings/{key}', 'verb' => 'PUT'],
 	],
 ];
