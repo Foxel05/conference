@@ -144,6 +144,8 @@
 <script>
 
 import SettingsSection from '@nextcloud/vue/dist/Components/SettingsSection'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'Admin',
@@ -240,34 +242,46 @@ export default {
 		},
 		async updateSetting(name, value) {
 			try {
-				await new Promise((resolve, reject) =>
-					OCP.AppConfig.setValue('jitsi', name, value, {
-						success: resolve,
-						error: reject,
-					})
+				const response = await axios.put(
+					generateUrl(`/apps/jitsi/api/settings/${name}`),
+					{ value }
 				)
+				
+				if (!response.data.success) {
+					this.errorMessage = this.t('jitsi', 'Failed to save settings')
+					console.error('Failed to save setting:', response.data)
+					throw new Error('Settings update failed')
+				}
+				
+				return response.data
 			} catch (e) {
-				this.error = this.t('jitsi', 'Failed to save settings')
+				this.errorMessage = this.t('jitsi', 'Failed to save settings')
+				console.error('Failed to save setting:', e)
 				throw e
 			}
 		},
 		async loadSetting(name, defaultValue = null) {
 			try {
-				const resDocument = await new Promise((resolve, reject) =>
-					OCP.AppConfig.getValue('jitsi', name, defaultValue, {
-						success: resolve,
-						error: reject,
-					})
+				const response = await axios.get(
+					generateUrl(`/apps/jitsi/api/settings/${name}`),
+					{ params: { default: defaultValue } }
 				)
-				if (resDocument.querySelector('status').textContent !== 'ok') {
+				
+				if (!response.data.success) {
 					this.errorMessage = this.t('jitsi', 'Failed to load settings')
-					console.error('Failed request', resDocument)
-					return
+					console.error('Failed to load setting:', response.data)
+					return defaultValue
 				}
-				const dataEl = resDocument.querySelector('data')
-				return dataEl.firstElementChild.textContent
+				
+				return response.data.value || defaultValue
 			} catch (e) {
+				if (e?.response?.status === 404) {
+					// Setting doesn't exist, return default value
+					return defaultValue
+				}
+				
 				this.errorMessage = this.t('jitsi', 'Failed to load settings')
+				console.error('Failed to load setting:', e)
 				throw e
 			}
 		},
