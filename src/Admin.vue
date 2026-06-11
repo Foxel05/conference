@@ -246,13 +246,13 @@ export default {
 					generateUrl(`/apps/jitsi/api/settings/${name}`),
 					{ value }
 				)
-				
+
 				if (!response.data.success) {
 					this.errorMessage = this.t('jitsi', 'Failed to save settings')
 					console.error('Failed to save setting:', response.data)
 					throw new Error('Settings update failed')
 				}
-				
+
 				return response.data
 			} catch (e) {
 				this.errorMessage = this.t('jitsi', 'Failed to save settings')
@@ -266,20 +266,20 @@ export default {
 					generateUrl(`/apps/jitsi/api/settings/${name}`),
 					{ params: { default: defaultValue } }
 				)
-				
+
 				if (!response.data.success) {
 					this.errorMessage = this.t('jitsi', 'Failed to load settings')
 					console.error('Failed to load setting:', response.data)
 					return defaultValue
 				}
-				
+
 				return response.data.value || defaultValue
 			} catch (e) {
 				if (e?.response?.status === 404) {
 					// Setting doesn't exist, return default value
 					return defaultValue
 				}
-				
+
 				this.errorMessage = this.t('jitsi', 'Failed to load settings')
 				console.error('Failed to load setting:', e)
 				throw e

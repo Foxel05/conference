@@ -287,7 +287,6 @@ export default {
 		this.startMuted = localStorage.getItem('jitsi.startMuted') === 'true'
 		this.startCameraOff = localStorage.getItem('jitsi.startCameraOff') === 'true'
 
-
 		this.onPermissionDenied = () => {
 			this.permissionDenied = true
 		}
