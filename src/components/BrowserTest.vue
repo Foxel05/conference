@@ -37,6 +37,7 @@
 <script>
 
 import CheckStatusIcon from './CheckStatusIcon'
+import eventBus from '../utils/eventBus'
 
 const OPTIMAL_BROWSERS = {
 	chrome: '>=78',
@@ -98,7 +99,7 @@ export default {
 
 		this.status = 'warning'
 
-		this.$root.$emit('tol-browser-status', this.status)
+		eventBus.emit('tol-browser-status', this.status)
 	},
 }
 </script>
