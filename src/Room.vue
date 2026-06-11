@@ -185,6 +185,7 @@ import CloseThickIcon from 'vue-material-design-icons/CloseThick.vue'
 
 import 'vue-material-design-icons/styles.css'
 import '../css/styles.css'
+import eventBus from './utils/eventBus'
 
 export default {
 	name: 'Room',
@@ -286,17 +287,21 @@ export default {
 		this.startMuted = localStorage.getItem('jitsi.startMuted') === 'true'
 		this.startCameraOff = localStorage.getItem('jitsi.startCameraOff') === 'true'
 
-		this.$root.$on('jitsi.device_permission_denied', () => {
+
+		this.onPermissionDenied = () => {
 			this.permissionDenied = true
-		})
+		}
+		eventBus.on('jitsi.device_permission_denied', this.onPermissionDenied)
 
-		this.$root.$on('jitsi.system_test_done', () => {
+		this.onSystemTestDone = () => {
 			this.systemTestDone = true
-		})
+		}
+		eventBus.on('jitsi.system_test_done', this.onSystemTestDone)
 
-		this.$root.$on('tol-browser-status', (status) => {
+		this.onBrowserStatus = (status) => {
 			this.browserStatus = status
-		})
+		}
+		eventBus.on('tol-browser-status', this.onBrowserStatus)
 
 		const jitsiEle = document.getElementById('jitsi')
 		this.serverUrl = jitsiEle.dataset.serverUrl
@@ -334,6 +339,21 @@ export default {
 		}
 
 		this.ready = true
+	},
+	beforeDestroy() {
+		// Clean up event listeners to prevent memory leaks
+		eventBus.off('jitsi.device_permission_denied', this.onPermissionDenied)
+		eventBus.off('jitsi.system_test_done', this.onSystemTestDone)
+		eventBus.off('tol-browser-status', this.onBrowserStatus)
+		if (this.onMicStopped) {
+			eventBus.off('mic-stopped', this.onMicStopped)
+		}
+		if (this.onCamStopped) {
+			eventBus.off('cam-stopped', this.onCamStopped)
+		}
+		if (this.onStopStreams) {
+			eventBus.off('stop-streams', this.onStopStreams)
+		}
 	},
 	methods: {
 		onCameraSelected(camera) {
@@ -480,7 +500,7 @@ export default {
 				this.conferenceRunning = false
 				this.conferenceDone = true
 				document.getElementById('header').style.display = ''
-				this.$root.$emit('resume-preview')
+				eventBus.emit('resume-preview')
 			})
 		},
 		async stopStreams() {
@@ -488,21 +508,24 @@ export default {
 				let micStopped = false
 				let camStopped = false
 
-				this.$root.$once('mic-stopped', () => {
+				this.onMicStopped = () => {
 					micStopped = true
 					if (camStopped) {
 						resolve()
 					}
-				})
+				}
 
-				this.$root.$once('cam-stopped', () => {
+				this.onCamStopped = () => {
 					camStopped = true
 					if (micStopped) {
 						resolve()
 					}
-				})
+				}
 
-				this.$root.$emit('stop-streams')
+				eventBus.once('mic-stopped', this.onMicStopped)
+				eventBus.once('cam-stopped', this.onCamStopped)
+
+				eventBus.emit('stop-streams')
 			})
 		},
 		async issueToken() {
